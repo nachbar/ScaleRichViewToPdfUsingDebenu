@@ -1,0 +1,114 @@
+From 5c7e883254eff6cf29156031f207111d8f8068a6 Mon Sep 17 00:00:00 2001
+From: James Nachbar <nachbar@plastic.org>
+Date: Sat, 8 Mar 2014 20:09:01 -0700
+Subject: [PATCH] Changes so that Debenu Quick PDF Library DLL/CPlusPlus files
+ will work in C++ Builder
+
+---
+ DebenuPDFLibraryDLL1013.cpp | 27 +++++++++++++++++++++++++--
+ DebenuPDFLibraryDLL1013.h   |  5 ++++-
+ 2 files changed, 29 insertions(+), 3 deletions(-)
+
+diff --git a/DebenuPDFLibraryDLL1013.cpp b/DebenuPDFLibraryDLL1013.cpp
+index ceb1c0d..0e927b0 100644
+--- a/DebenuPDFLibraryDLL1013.cpp
++++ b/DebenuPDFLibraryDLL1013.cpp
+@@ -1,3 +1,6 @@
++#define UNICODE
++#include <vcl.h>
++#pragma hdrstop
+ // Debenu Quick PDF Library
+ // DLL Edition
+ // Version 10.13
+@@ -924,6 +927,14 @@ wchar_t* DebenuPDFLibraryDLL1013::WideStringParm(const std::wstring& strParm)
+ 	return sp;
+ }
+ 
++// JMN:
++wchar_t* DebenuPDFLibraryDLL1013::WideStringParm(const UnicodeString& strParm) // JMN
++{
++	wchar_t* sp;
++	sp = (wchar_t*)strParm.c_str();
++	return sp;
++}
++
+ int DebenuPDFLibraryDLL1013::SetProgressCallback(void* ProgressProc, void* UserData)
+ {
+ 	return DebenuPDFLibrarySetProgressCallback(instanceID, ProgressProc, UserData);
+@@ -2060,7 +2071,14 @@ int DebenuPDFLibraryDLL1013::DrawTextArc(double XPos, double YPos, double Radius
+ 
+ int DebenuPDFLibraryDLL1013::DrawTextBox(double Left, double Top, double Width, double Height, const std::wstring& Text, int Options)
+ {
+-	return DebenuPDFLibraryDrawTextBox(instanceID, Left, Top, Width, Height, 
++	return DebenuPDFLibraryDrawTextBox(instanceID, Left, Top, Width, Height,
++		WideStringParm(Text), Options);
++}
++
++// JMN - added this
++int DebenuPDFLibraryDLL1013::DrawTextBox(double Left, double Top, double Width, double Height, const UnicodeString& Text, int Options)
++{
++	return DebenuPDFLibraryDrawTextBox(instanceID, Left, Top, Width, Height,
+ 		WideStringParm(Text), Options);
+ }
+ 
+@@ -3858,7 +3876,7 @@ std::wstring DebenuPDFLibraryDLL1013::LastRenderError()
+ 	return resultStr;
+ }
+ 
+-std::wstring DebenuPDFLibraryDLL1013::LibraryVersion()
++std::wstring DebenuPDFLibraryDLL1013::LibraryVersionX()  // JMN - apparent name collision?
+ {
+ 	wchar_t* result;
+ 	result = DebenuPDFLibraryLibraryVersion(instanceID);
+@@ -4438,6 +4456,11 @@ int DebenuPDFLibraryDLL1013::SaveToFile(const std::wstring& FileName)
+ 	return DebenuPDFLibrarySaveToFile(instanceID, WideStringParm(FileName));
+ }
+ 
++int DebenuPDFLibraryDLL1013::SaveToFile(const UnicodeString& FileName) // JMN
++{
++	return DebenuPDFLibrarySaveToFile(instanceID, WideStringParm(FileName));
++}
++
+ std::string DebenuPDFLibraryDLL1013::SaveToString()
+ {
+ 	char* result;
+diff --git a/DebenuPDFLibraryDLL1013.h b/DebenuPDFLibraryDLL1013.h
+index 7155c48..1e671bb 100644
+--- a/DebenuPDFLibraryDLL1013.h
++++ b/DebenuPDFLibraryDLL1013.h
+@@ -365,6 +365,7 @@ public:
+ 	int DrawText(double XPos, double YPos, const std::wstring& Text);
+ 	int DrawTextArc(double XPos, double YPos, double Radius, double Angle, const std::wstring& Text, int DrawOptions);
+ 	int DrawTextBox(double Left, double Top, double Width, double Height, const std::wstring& Text, int Options);
++	int DrawTextBox(double Left, double Top, double Width, double Height, const UnicodeString& Text, int Options); // JMN
+ 	int DrawTextBoxMatrix(double Width, double Height, const std::wstring& Text, int Options, double M11, double M12, double M21, double M22, double MDX, double MDY);
+ 	int DrawWrappedText(double XPos, double YPos, double Width, const std::wstring& Text);
+ 	int EditableContentStream();
+@@ -651,7 +652,7 @@ public:
+ 	int IsTaggedPDF();
+ 	int LastErrorCode();
+ 	std::wstring LastRenderError();
+-	std::wstring LibraryVersion();
++	std::wstring LibraryVersionX(); // JMN - apparent name collision?
+ 	std::wstring LicenseInfo();
+ 	int Linearized();
+ 	int LoadFromCanvasDC(double DPI, int Options);
+@@ -750,6 +751,7 @@ public:
+ 	int SaveState();
+ 	int SaveStyle(const std::wstring& StyleName);
+ 	int SaveToFile(const std::wstring& FileName);
++	int SaveToFile(const UnicodeString& FileName); // JMN
+ 	std::string SaveToString();
+ 	int SecurityInfo(int SecurityItem);
+ 	int SelectContentStream(int NewIndex);
+@@ -1019,6 +1021,7 @@ private:
+ 	int instanceID;
+ 	char* StringParm(const std::string& strParm, int& sb);
+ 	wchar_t* WideStringParm(const std::wstring& strParm);
++	wchar_t* WideStringParm(const UnicodeString& strParm); // JMN
+ 	bool loadError;
+ 	FARPROC AttachFunction(char* funcName);
+ 	DebenuPDFLibraryFuncType150 DebenuPDFLibrarySetProgressCallback;
+-- 
+1.8.5.2
+
